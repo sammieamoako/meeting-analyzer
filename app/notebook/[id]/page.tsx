@@ -5,9 +5,12 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useDropzone } from 'react-dropzone'
 import { Toaster, toast } from 'sonner'
+import { useLiveRecording } from '@/hooks/useLiveRecording'
 import SourcesPanel from '@/components/SourcesPanel'
 import ChatPanel from '@/components/ChatPanel'
 import StudioPanel from '@/components/StudioPanel'
+
+export const dynamic = 'force-dynamic'
 
 interface Transcript {
   id: string
@@ -25,6 +28,22 @@ export default function NotebookPage() {
   const [activeTranscriptId, setActiveTranscriptId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [savingRecording, setSavingRecording] = useState(false)
+
+  const {
+    isRecording,
+    isConnecting,
+    duration,
+    liveTranscript,
+    startRecording,
+    stopRecording,
+    formatDuration
+  } = useLiveRecording({
+    onError: (error) => toast.error(error),
+    onTranscriptUpdate: (transcript, speaker) => {
+      console.log(`Speaker ${speaker}: ${transcript}`)
+    }
+  })
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -113,7 +132,8 @@ export default function NotebookPage() {
         .update({
           cleaned_text: transcriptText,
           speaker_turns: speakerTurns,
-          status: 'completed'
+          status: 'completed',
+          title: new Date().toLocaleString()
         })
         .eq('id', transcript.id)
 
@@ -128,8 +148,42 @@ export default function NotebookPage() {
     }
   }
 
+  async function saveLiveRecording() {
+    if (!liveTranscript.trim()) {
+      toast.error('No transcript to save')
+      return
+    }
+    
+    setSavingRecording(true)
+    
+    const { error } = await supabase
+      .from('transcripts')
+      .insert({
+        notebook_id: id,
+        title: `Live Recording ${new Date().toLocaleString()}`,
+        cleaned_text: liveTranscript,
+        status: 'completed',
+        meeting_date: new Date().toISOString()
+      })
+    
+    if (error) {
+      console.error('Error saving recording:', error)
+      toast.error('Failed to save recording')
+    } else {
+      toast.success('Recording saved!')
+      setTranscripts(prev => [])
+      loadTranscripts()
+    }
+    
+    setSavingRecording(false)
+  }
+
   if (loading) {
     return <div className="flex min-h-screen items-center justify-center">Loading...</div>
+  }
+
+  if (!notebook) {
+    return <div className="flex min-h-screen items-center justify-center">Notebook not found</div>
   }
 
   const activeTranscript = transcripts.find(t => t.id === activeTranscriptId)
@@ -165,10 +219,54 @@ export default function NotebookPage() {
         </div>
       </div>
 
+      {/* Live Recording Section */}
+      <div className="bg-gray-50 border-b px-4 py-2">
+        <div className="flex items-center gap-4">
+          {!isRecording && !isConnecting && !liveTranscript && (
+            <button
+              onClick={startRecording}
+              className="bg-red-500 text-white px-4 py-1 rounded-lg text-sm hover:bg-red-600"
+            >
+              🎙️ Record
+            </button>
+          )}
+          
+          {(isConnecting || isRecording) && (
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-yellow-500'}`}></div>
+                <span className="font-mono text-sm">{formatDuration(duration)}</span>
+              </div>
+              {isRecording && (
+                <button
+                  onClick={stopRecording}
+                  className="bg-gray-500 text-white px-4 py-1 rounded-lg text-sm hover:bg-gray-600"
+                >
+                  Stop
+                </button>
+              )}
+            </div>
+          )}
+          
+          {!isRecording && !isConnecting && liveTranscript && (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-600 truncate max-w-md">{liveTranscript.substring(0, 100)}...</span>
+              <button
+                onClick={saveLiveRecording}
+                disabled={savingRecording}
+                className="bg-green-500 text-white px-4 py-1 rounded-lg text-sm hover:bg-green-600"
+              >
+                {savingRecording ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Three Columns */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left: Sources */}
-        <div className="w-80 shrink-0">
+        <div className="w-80 flex-shrink-0 border-r border-gray-200">
           <SourcesPanel
             transcripts={transcripts}
             activeTranscriptId={activeTranscriptId}
@@ -185,7 +283,7 @@ export default function NotebookPage() {
         </div>
 
         {/* Right: Studio */}
-        <div className="w-96 shrink-0">
+        <div className="w-96 flex-shrink-0 border-l border-gray-200">
           <StudioPanel
             transcriptId={activeTranscriptId}
             transcriptContent={activeTranscript?.cleaned_text}
