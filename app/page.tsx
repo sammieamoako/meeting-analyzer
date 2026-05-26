@@ -19,14 +19,6 @@ export default function HomePage() {
     }
     
     checkUser()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        router.replace('/dashboard')
-      }
-    })
-
-    return () => subscription.unsubscribe()
   }, [router])
 
   const handleGoogleLogin = async () => {
