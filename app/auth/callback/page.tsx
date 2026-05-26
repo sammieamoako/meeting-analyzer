@@ -4,6 +4,9 @@ import { useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 
+// Tell Next.js not to prerender this page (fixes Vercel build error)
+export const dynamic = 'force-dynamic'
+
 function CallbackContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
