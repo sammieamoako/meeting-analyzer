@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
+export const dynamic = 'force-dynamic'
+
 export default function DashboardPage() {
   const [notebooks, setNotebooks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -76,7 +78,7 @@ export default function DashboardPage() {
   }
 
   async function deleteNotebook(id: string, e: React.MouseEvent) {
-    e.stopPropagation() // Prevents clicking the parent div
+    e.stopPropagation()
     
     const confirmed = confirm('Are you sure you want to delete this notebook? All meetings inside will also be deleted.')
     if (!confirmed) return
@@ -158,7 +160,6 @@ export default function DashboardPage() {
                 <button
                   onClick={(e) => deleteNotebook(notebook.id, e)}
                   className="text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity"
-                  title="Delete notebook"
                 >
                   🗑️
                 </button>
