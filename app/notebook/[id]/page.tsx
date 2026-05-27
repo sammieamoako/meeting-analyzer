@@ -2,9 +2,6 @@
 
 export const dynamic = 'force-dynamic'
 
-// rest of your notebook code...
-'use client'
-
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
@@ -14,8 +11,6 @@ import { useLiveRecording } from '@/hooks/useLiveRecording'
 import SourcesPanel from '@/components/SourcesPanel'
 import ChatPanel from '@/components/ChatPanel'
 import StudioPanel from '@/components/StudioPanel'
-
-export const dynamic = 'force-dynamic'
 
 interface Transcript {
   id: string
@@ -176,7 +171,6 @@ export default function NotebookPage() {
       toast.error('Failed to save recording')
     } else {
       toast.success('Recording saved!')
-      setTranscripts(prev => [])
       loadTranscripts()
     }
     
@@ -195,13 +189,9 @@ export default function NotebookPage() {
 
   return (
     <div className="h-screen flex flex-col">
-      {/* Header */}
       <div className="bg-white border-b px-6 py-3 flex justify-between items-center">
         <div>
-          <button 
-            onClick={() => router.push('/dashboard')} 
-            className="text-blue-500 hover:underline text-sm mr-4"
-          >
+          <button onClick={() => router.push('/dashboard')} className="text-blue-500 hover:underline text-sm mr-4">
             ← Dashboard
           </button>
           <h1 className="text-xl font-bold inline">{notebook?.name}</h1>
@@ -211,27 +201,17 @@ export default function NotebookPage() {
         </div>
       </div>
 
-      {/* Upload Bar */}
       <div className="bg-gray-50 border-b px-4 py-2">
-        <div
-          {...getRootProps()}
-          className={`cursor-pointer text-center py-1 px-3 rounded-lg text-sm transition-colors inline-block ${
-            uploading ? 'opacity-50' : 'hover:bg-gray-200'
-          }`}
-        >
+        <div {...getRootProps()} className={`cursor-pointer text-center py-1 px-3 rounded-lg text-sm transition-colors inline-block ${uploading ? 'opacity-50' : 'hover:bg-gray-200'}`}>
           <input {...getInputProps()} disabled={uploading} />
           {uploading ? '⏳ Processing...' : '📁 + Upload Audio'}
         </div>
       </div>
 
-      {/* Live Recording Section */}
       <div className="bg-gray-50 border-b px-4 py-2">
         <div className="flex items-center gap-4">
           {!isRecording && !isConnecting && !liveTranscript && (
-            <button
-              onClick={startRecording}
-              className="bg-red-500 text-white px-4 py-1 rounded-lg text-sm hover:bg-red-600"
-            >
+            <button onClick={startRecording} className="bg-red-500 text-white px-4 py-1 rounded-lg text-sm hover:bg-red-600">
               🎙️ Record
             </button>
           )}
@@ -243,10 +223,7 @@ export default function NotebookPage() {
                 <span className="font-mono text-sm">{formatDuration(duration)}</span>
               </div>
               {isRecording && (
-                <button
-                  onClick={stopRecording}
-                  className="bg-gray-500 text-white px-4 py-1 rounded-lg text-sm hover:bg-gray-600"
-                >
+                <button onClick={stopRecording} className="bg-gray-500 text-white px-4 py-1 rounded-lg text-sm hover:bg-gray-600">
                   Stop
                 </button>
               )}
@@ -256,11 +233,7 @@ export default function NotebookPage() {
           {!isRecording && !isConnecting && liveTranscript && (
             <div className="flex items-center gap-3">
               <span className="text-sm text-gray-600 truncate max-w-md">{liveTranscript.substring(0, 100)}...</span>
-              <button
-                onClick={saveLiveRecording}
-                disabled={savingRecording}
-                className="bg-green-500 text-white px-4 py-1 rounded-lg text-sm hover:bg-green-600"
-              >
+              <button onClick={saveLiveRecording} disabled={savingRecording} className="bg-green-500 text-white px-4 py-1 rounded-lg text-sm hover:bg-green-600">
                 {savingRecording ? 'Saving...' : 'Save'}
               </button>
             </div>
@@ -268,31 +241,15 @@ export default function NotebookPage() {
         </div>
       </div>
 
-      {/* Three Columns */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left: Sources */}
         <div className="w-80 flex-shrink-0 border-r border-gray-200">
-          <SourcesPanel
-            transcripts={transcripts}
-            activeTranscriptId={activeTranscriptId}
-            onSelectTranscript={setActiveTranscriptId}
-          />
+          <SourcesPanel transcripts={transcripts} activeTranscriptId={activeTranscriptId} onSelectTranscript={setActiveTranscriptId} />
         </div>
-
-        {/* Center: Chat */}
         <div className="flex-1 flex flex-col">
-          <ChatPanel
-            transcriptId={activeTranscriptId}
-            transcriptTitle={activeTranscript?.title}
-          />
+          <ChatPanel transcriptId={activeTranscriptId} transcriptTitle={activeTranscript?.title} />
         </div>
-
-        {/* Right: Studio */}
         <div className="w-96 flex-shrink-0 border-l border-gray-200">
-          <StudioPanel
-            transcriptId={activeTranscriptId}
-            transcriptContent={activeTranscript?.cleaned_text}
-          />
+          <StudioPanel transcriptId={activeTranscriptId} transcriptContent={activeTranscript?.cleaned_text} />
         </div>
       </div>
 
