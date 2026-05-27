@@ -2,14 +2,9 @@
 
 export const dynamic = 'force-dynamic'
 
-// rest of your dashboard code...
-'use client'
-
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-
-export const dynamic = 'force-dynamic'
 
 export default function DashboardPage() {
   const [notebooks, setNotebooks] = useState<any[]>([])
