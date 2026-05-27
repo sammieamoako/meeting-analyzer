@@ -2,15 +2,9 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useParams, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { useDropzone } from 'react-dropzone'
-import { Toaster, toast } from 'sonner'
-import { useLiveRecording } from '@/hooks/useLiveRecording'
-import SourcesPanel from '@/components/SourcesPanel'
-import ChatPanel from '@/components/ChatPanel'
-import StudioPanel from '@/components/StudioPanel'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true)
