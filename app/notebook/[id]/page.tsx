@@ -29,6 +29,7 @@ export default function NotebookPage() {
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [savingRecording, setSavingRecording] = useState(false)
+  const [mobileTab, setMobileTab] = useState<'sources' | 'chat' | 'studio'>('sources')
 
   const {
     isRecording,
@@ -188,72 +189,151 @@ export default function NotebookPage() {
   const activeTranscript = transcripts.find(t => t.id === activeTranscriptId)
 
   return (
-    <div className="h-screen flex flex-col">
-      <div className="bg-white border-b px-6 py-3 flex justify-between items-center">
-        <div>
-          <button onClick={() => router.push('/dashboard')} className="text-blue-500 hover:underline text-sm mr-4">
+    <>
+      <div className="desktop-layout h-screen flex flex-col">
+        <div className="bg-white border-b px-6 py-3 flex justify-between items-center">
+          <div>
+            <button onClick={() => router.push('/dashboard')} className="text-blue-500 hover:underline text-sm mr-4">
+              ← Dashboard
+            </button>
+            <h1 className="text-xl font-bold inline">{notebook?.name}</h1>
+          </div>
+          <div className="text-sm text-gray-500">
+            {transcripts.length} meeting{transcripts.length !== 1 ? 's' : ''}
+          </div>
+        </div>
+
+        <div className="bg-gray-50 border-b px-4 py-2">
+          <div {...getRootProps()} className={`cursor-pointer text-center py-1 px-3 rounded-lg text-sm transition-colors inline-block ${uploading ? 'opacity-50' : 'hover:bg-gray-200'}`}>
+            <input {...getInputProps()} disabled={uploading} />
+            {uploading ? '⏳ Processing...' : '📁 + Upload Audio'}
+          </div>
+        </div>
+
+        <div className="bg-gray-50 border-b px-4 py-2">
+          <div className="flex items-center gap-4">
+            {!isRecording && !isConnecting && !liveTranscript && (
+              <button onClick={startRecording} className="bg-red-500 text-white px-4 py-1 rounded-lg text-sm hover:bg-red-600">
+                🎙️ Record
+              </button>
+            )}
+            
+            {(isConnecting || isRecording) && (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-yellow-500'}`}></div>
+                  <span className="font-mono text-sm">{formatDuration(duration)}</span>
+                </div>
+                {isRecording && (
+                  <button onClick={stopRecording} className="bg-gray-500 text-white px-4 py-1 rounded-lg text-sm hover:bg-gray-600">
+                    Stop
+                  </button>
+                )}
+              </div>
+            )}
+            
+            {!isRecording && !isConnecting && liveTranscript && (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-600 truncate max-w-md">{liveTranscript.substring(0, 100)}...</span>
+                <button onClick={saveLiveRecording} disabled={savingRecording} className="bg-green-500 text-white px-4 py-1 rounded-lg text-sm hover:bg-green-600">
+                  {savingRecording ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex-1 flex overflow-hidden">
+          <div className="w-80 flex-shrink-0 border-r border-gray-200">
+            <SourcesPanel transcripts={transcripts} activeTranscriptId={activeTranscriptId} onSelectTranscript={setActiveTranscriptId} />
+          </div>
+          <div className="flex-1 flex flex-col">
+            <ChatPanel transcriptId={activeTranscriptId} transcriptTitle={activeTranscript?.title} />
+          </div>
+          <div className="w-96 flex-shrink-0 border-l border-gray-200">
+            <StudioPanel transcriptId={activeTranscriptId} transcriptContent={activeTranscript?.cleaned_text} />
+          </div>
+        </div>
+      </div>
+
+      <div className="mobile-layout h-screen flex flex-col">
+        <div className="bg-white border-b px-4 py-3">
+          <button onClick={() => router.push('/dashboard')} className="text-blue-500 text-sm mb-2">
             ← Dashboard
           </button>
-          <h1 className="text-xl font-bold inline">{notebook?.name}</h1>
+          <h1 className="text-xl font-bold">{notebook?.name}</h1>
+          <div className="text-xs text-gray-500 mt-1">
+            {transcripts.length} meeting{transcripts.length !== 1 ? 's' : ''}
+          </div>
         </div>
-        <div className="text-sm text-gray-500">
-          {transcripts.length} meeting{transcripts.length !== 1 ? 's' : ''}
-        </div>
-      </div>
 
-      <div className="bg-gray-50 border-b px-4 py-2">
-        <div {...getRootProps()} className={`cursor-pointer text-center py-1 px-3 rounded-lg text-sm transition-colors inline-block ${uploading ? 'opacity-50' : 'hover:bg-gray-200'}`}>
-          <input {...getInputProps()} disabled={uploading} />
-          {uploading ? '⏳ Processing...' : '📁 + Upload Audio'}
-        </div>
-      </div>
-
-      <div className="bg-gray-50 border-b px-4 py-2">
-        <div className="flex items-center gap-4">
-          {!isRecording && !isConnecting && !liveTranscript && (
-            <button onClick={startRecording} className="bg-red-500 text-white px-4 py-1 rounded-lg text-sm hover:bg-red-600">
-              🎙️ Record
-            </button>
-          )}
+        <div className="bg-gray-50 border-b px-3 py-2">
+          <div {...getRootProps()} className={`cursor-pointer text-center py-2 px-3 rounded-lg text-sm ${uploading ? 'opacity-50' : 'bg-white border'}`}>
+            <input {...getInputProps()} disabled={uploading} />
+            {uploading ? '⏳ Processing...' : '📁 Upload Audio'}
+          </div>
           
-          {(isConnecting || isRecording) && (
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-yellow-500'}`}></div>
-                <span className="font-mono text-sm">{formatDuration(duration)}</span>
-              </div>
-              {isRecording && (
-                <button onClick={stopRecording} className="bg-gray-500 text-white px-4 py-1 rounded-lg text-sm hover:bg-gray-600">
-                  Stop
-                </button>
-              )}
-            </div>
-          )}
-          
-          {!isRecording && !isConnecting && liveTranscript && (
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600 truncate max-w-md">{liveTranscript.substring(0, 100)}...</span>
-              <button onClick={saveLiveRecording} disabled={savingRecording} className="bg-green-500 text-white px-4 py-1 rounded-lg text-sm hover:bg-green-600">
-                {savingRecording ? 'Saving...' : 'Save'}
+          <div className="mt-2">
+            {!isRecording && !isConnecting && !liveTranscript && (
+              <button onClick={startRecording} className="w-full bg-red-500 text-white py-2 rounded-lg text-sm font-semibold">
+                🎙️ Start Recording
               </button>
-            </div>
-          )}
+            )}
+            
+            {(isConnecting || isRecording) && (
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-yellow-500'}`}></div>
+                  <span className="font-mono text-sm">{formatDuration(duration)}</span>
+                </div>
+                {isRecording && (
+                  <button onClick={stopRecording} className="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm">
+                    Stop
+                  </button>
+                )}
+              </div>
+            )}
+            
+            {!isRecording && !isConnecting && liveTranscript && (
+              <div>
+                <p className="text-xs text-gray-600 mb-2 line-clamp-2">{liveTranscript.substring(0, 100)}...</p>
+                <button onClick={saveLiveRecording} disabled={savingRecording} className="w-full bg-green-500 text-white py-2 rounded-lg text-sm">
+                  {savingRecording ? 'Saving...' : 'Save Recording'}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className="flex-1 flex overflow-hidden">
-        <div className="w-80 flex-shrink-0 border-r border-gray-200">
+        <div className={`mobile-panel ${mobileTab === 'sources' ? '' : 'hidden'}`}>
           <SourcesPanel transcripts={transcripts} activeTranscriptId={activeTranscriptId} onSelectTranscript={setActiveTranscriptId} />
         </div>
-        <div className="flex-1 flex flex-col">
+        
+        <div className={`mobile-panel ${mobileTab === 'chat' ? '' : 'hidden'}`}>
           <ChatPanel transcriptId={activeTranscriptId} transcriptTitle={activeTranscript?.title} />
         </div>
-        <div className="w-96 flex-shrink-0 border-l border-gray-200">
+        
+        <div className={`mobile-panel ${mobileTab === 'studio' ? '' : 'hidden'}`}>
           <StudioPanel transcriptId={activeTranscriptId} transcriptContent={activeTranscript?.cleaned_text} />
+        </div>
+
+        <div className="mobile-tabs">
+          <button onClick={() => setMobileTab('sources')} className={`mobile-tab ${mobileTab === 'sources' ? 'active' : ''}`}>
+            <span className="mobile-tab-icon">📁</span>
+            <span>Sources</span>
+          </button>
+          <button onClick={() => setMobileTab('chat')} className={`mobile-tab ${mobileTab === 'chat' ? 'active' : ''}`}>
+            <span className="mobile-tab-icon">💬</span>
+            <span>Chat</span>
+          </button>
+          <button onClick={() => setMobileTab('studio')} className={`mobile-tab ${mobileTab === 'studio' ? 'active' : ''}`}>
+            <span className="mobile-tab-icon">🎨</span>
+            <span>Studio</span>
+          </button>
         </div>
       </div>
 
       <Toaster position="bottom-right" />
-    </div>
+    </>
   )
 }
