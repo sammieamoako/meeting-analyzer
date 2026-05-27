@@ -1,5 +1,10 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
+// rest of your login code...
+'use client'
+
 import { supabase } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
